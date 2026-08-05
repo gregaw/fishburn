@@ -8,7 +8,7 @@ Evaluating the Impact of Nash Learning from Human Feedback (NLHF) on Chain-of-Th
 
 **Fishburn** investigates the interpretability and safety implications of shifting LLM post-training from traditional RLHF to game-theoretic Nash Learning from Human Feedback (NLHF).
 
-* **Read the full proposal:** [Research Proposal: NLHF and CoT Monitorability (PDF)](https://www.google.com/search?q=%23) *(Replace `#` with your file URL)*
+* **Read the full proposal:** [Research Proposal: NLHF and CoT Monitorability (PDF)](https://github.com/gregaw/fishburn/blob/main/Research%20Proposal%20NLHF%20and%20CoT%20monitorability.pdf)
 
 ---
 
