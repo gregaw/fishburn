@@ -1,0 +1,88 @@
+# Canary tier: the real profile on a small slice, every leg for cents. Run it,
+# watch it, then dispatch the real profile.
+profile: canary
+
+model:
+  name: Qwen/Qwen3-0.6B           # post-trained, thinking mode switched off below
+  dtype: float32             # fp32 weights, bf16 autocast in training (pipeline/legs/common.py)
+  device: cuda
+
+data_prep:
+  source: ultrafeedback      # real preference data (pipeline/prefdata/loaders.py)
+  n_pairs: 256
+  n_test_pairs: 200          # test-split pairs for the preference check, never trained on
+  n_eval_prompts: 64
+  max_chars: 2000            # prompt + longer response; keeps sequences inside max_length
+  seed: 7
+
+judge:
+  backend: pairrm            # llm-blender/PairRM (pipeline/judge/pairrm.py)
+  model: llm-blender/PairRM
+  batch_size: 8
+  usd_per_1k_pairs: 0.13     # measured, experiment 0013 (L4, 440.7 s per 1k pairs)
+
+relabel:
+  swap: false                # train on the dataset's own labels; verdicts are only recorded
+
+shared:
+  template: chat-nothink     # Qwen3 template, thinking off: 192 tokens would cut a thought short
+  beta: 0.1
+  sampling:
+    max_new_tokens: 192
+    temperature: 0.9
+    top_p: 1.0
+  kl:
+    milestones: [1.0, 2.0, 4.0, 8.0, 16.0]
+    eval_every: 8
+    n_prompts: 32
+
+legs: [dpo, online_dpo, nashmp]
+
+train:
+  steps: 16
+  batch_size: 2              # per device; x grad_accum = 8 pairs/prompts per step
+  grad_accum: 4              # Qwen's 152k-token vocab makes full-batch logits OOM an L4 (exp 0113)
+  learning_rate: 5.0e-6
+  max_length: 768
+  checkpoint_dtype: bfloat16 # halves the 0.5B checkpoints on the volume
+  seed: 7
+  overrides:
+    # experiment 0113: at 5e-6 the DPO real run drifted to 34 nats with longer,
+    # hallucinating answers the judge liked less than the base (0.44). 5e-7 is
+    # the usual full-fine-tune DPO rate; this run tests over-optimization.
+    dpo: {learning_rate: 5.0e-7}   # the instruct-base DPO run that stayed near the base
+    # The two online legs get the same step count, learning rate and sampler,
+    # and are compared at KL milestones, not step counts.
+    online_dpo: {steps: 16, learning_rate: 1.0e-6, sampler: vllm,
+                 vllm_gpu_memory_utilization: 0.2}
+    # experiment 0123: NashMP with PairRM on an L4, sampling in a colocated
+    # vLLM engine. Full fine-tuning REINFORCE needs a smaller step than DPO's
+    # pairs; 1e-6 is the usual online-RL rate at this size. eta = 2 beta.
+    # 16 steps here (2 iterations of both phases).
+    nashmp: {steps: 16, learning_rate: 1.0e-6, sampler: vllm,
+             vllm_gpu_memory_utilization: 0.2, inner_steps: 4,
+             n_samples: 2, n_opponent: 2}
+
+sanity:
+  backend: vllm              # vLLM sampling for both models (experiment 0122)
+  gpu_memory_utilization: 0.4
+  pref_pairs: 200           # the preference check (experiment 0123)
+  onpolicy_check: true       # the same on two base answers per prompt, judged by PairRM
+  n_prompts: 64
+  seed: 17
+  n_bootstrap: 2000
+
+eval_cot:
+  backend: vllm              # experiment 0122
+  n_samples: 16
+  max_new_tokens: 256
+  seed: 11
+
+eval_steering:
+  backend: vllm              # experiment 0122
+  n_samples: 8
+  max_new_tokens: 256
+  seed: 13
+
+# Every stage fits an L4: policy, reference, PairRM and the vLLM engine together.
+gpu: L4

@@ -1,0 +1,23 @@
+# Exact pins for nlhf-cot-monitor (training stack chosen in experiment 0108).
+#
+# trl 0.29.1 is the newest 0.x release whose OnlineDPOTrainer still takes a
+# pairwise `judge`; in 1.x the judge argument is gone (checked up to 1.12.0).
+# Online DPO driven by a scalar reward would hide the judge's cycles from the
+# legacy leg too. transformers stays on 4.x because llm-blender (the PairRM
+# judge) and trl's judges extra need transformers < 5.
+#
+# `modal` and `pytest` are installed alongside, not pinned here.
+#
+# torch 2.9.0 and numpy 2.2.6 (not 2.9.1 / 2.4.6) so vLLM 0.12.0 fits the
+# same image (configs/requirements-vllm.txt, experiment 0122): 0.12.0 is the
+# newest vLLM trl 0.29.1 supports, and it pins torch 2.9.0.
+torch==2.9.0
+transformers==4.57.6
+tokenizers==0.22.2
+trl==0.29.1
+peft==0.18.1
+accelerate==1.12.0
+datasets==4.4.2
+pyyaml==6.0.2
+numpy==2.2.6
+huggingface_hub==0.36.2

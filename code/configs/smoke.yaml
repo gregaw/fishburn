@@ -1,0 +1,67 @@
+# Tiny CPU profile for the local e2e gate: validates pipeline wiring, not
+# research results. No credentials, no network: tiny randomly-initialised Qwen2
+# config + a WordLevel tokenizer built in-process (the gate must run
+# with huggingface.co unreachable).
+profile: smoke
+
+model:
+  name: tiny-random          # sentinel: build a tiny Qwen2Config from scratch
+  dtype: float32
+  device: cpu
+
+data_prep:
+  source: synthetic          # offline generator — the gate must not touch the network
+  n_pairs: 16                # pairwise preference records (prompt, chosen, rejected)
+  n_test_pairs: 8            # held-out-split pairs, relabelled for the seen/unseen comparison only
+  n_eval_prompts: 6
+  seed: 7
+
+# The judge. One spec for every leg (pipeline/shared.py, experiment 0110).
+judge:
+  backend: stub              # deterministic offline judge (pipeline/judge/base.py)
+  usd_per_1k_pairs: 0.0
+
+# Frozen config every leg imports (experiment 0110). Only the leg's training
+# rule may differ between legs.
+shared:
+  template: plain            # the tiny tokenizer has no chat template
+  beta: 0.1                  # KL weight, same meaning in DPO, Online DPO and NashMP
+  sampling:
+    max_new_tokens: 8
+    temperature: 1.0
+    top_p: 1.0
+  kl:
+    milestones: [0.01, 0.1, 1.0]   # nats per sequence, KL(policy || base)
+    eval_every: 2
+    n_prompts: 4
+
+legs: [dpo, online_dpo, nashmp]
+
+train:
+  steps: 4
+  batch_size: 4
+  learning_rate: 1.0e-3
+  max_length: 64
+  seed: 7
+  overrides:
+    nashmp: {inner_steps: 1}   # both Mirror Prox phases inside 4 steps (experiment 0123)
+
+sanity:
+  n_prompts: 6
+  seed: 17
+  n_bootstrap: 200
+  extra_judges: [{backend: stub}]  # the second-opinion path (experiment 0121)
+  pref_pairs: 8              # the preference check on data_prep's held-out pairs (experiment 0123)
+  onpolicy_check: true       # the same on two base answers per prompt, judged (experiment 0123)
+
+eval_cot:
+  n_samples: 6
+  max_new_tokens: 8
+  seed: 11
+
+eval_steering:
+  n_samples: 4
+  max_new_tokens: 8
+  seed: 13
+
+gpu: none

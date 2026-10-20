@@ -1,0 +1,7 @@
+# The PairRM judge, on top of requirements.txt. Cloud image / opt-in venv only:
+# the offline test gate never needs it (the import is lazy).
+#
+# llm-blender is installed from GitHub because the PyPI release predates the
+# PairRM ranker. Pinned to a commit so the image is reproducible; checked to
+# load PairRM under transformers 4.57.6 in experiment 0108.
+llm-blender @ git+https://github.com/yuchenlin/LLM-Blender.git@33204d2712944b6b17996f7c079e74cd963ccc7c
