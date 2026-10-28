@@ -51,8 +51,8 @@ sanity:
   seed: 17
   n_bootstrap: 200
   extra_judges: [{backend: stub}]  # the second-opinion path (experiment 0121)
-  pref_pairs: 8              # the preference check on data_prep's held-out pairs (experiment 0123)
-  onpolicy_check: true       # the same on two base answers per prompt, judged (experiment 0123)
+  pref_pairs: 8              # the dataset check on data_prep's held-out pairs (experiment 0123)
+  onpolicy_check: true       # the own-answers check: the same on two base answers per prompt, judged (experiment 0123)
 
 eval_cot:
   n_samples: 6

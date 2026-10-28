@@ -6,12 +6,12 @@ These say whether a leg learned something, not whether the model got better:
 - loss falls: mean logged loss, last quarter of steps vs first quarter.
 - KL grows: last KL-from-base estimate above the first, and positive.
 - generations sane: non-empty, not degenerate repetition (distinct-token ratio).
-- judge prefers trained over base: mean P(trained > base) over both orderings
-  on held-out prompts, with a bootstrap 95 % interval above 0.5.
-- preference check (with `sanity.pref_pairs`): on held-out labelled pairs,
+- judge check: mean P(trained > base) over both orderings on held-out
+  prompts, with a bootstrap 95 % interval above 0.5.
+- dataset check (with `sanity.pref_pairs`): on held-out labelled pairs,
   training raised log p(chosen) relative to log p(rejected) on more than half,
   beyond noise (pipeline/prefcheck.py).
-- on-policy check (with `sanity.onpolicy_check`, reported only): the same gap
+- own-answers check (with `sanity.onpolicy_check`, reported only): the same gap
   on pairs of two base answers per prompt, with the judge's pick as "chosen".
 
 At smoke scale the judge check is the mean probability, not a hard win
@@ -117,7 +117,7 @@ def make(leg: str):
             load_state(trained, store.get(store.key(upstream, CHECKPOINT)))
             trained.to(device).eval()
 
-            # experiment 0123: the preference check, while both models are
+            # experiment 0123: the dataset check, while both models are
             # loaded (the vLLM path below hands them over and drops them)
             pref_check = None
             n_pairs = s.get("pref_pairs", 0)
@@ -162,7 +162,7 @@ def make(leg: str):
             lo, hi = bootstrap_ci(pref, s["n_bootstrap"], s["seed"])
             wins = sum(1.0 if p > 0.5 else 0.5 if p == 0.5 else 0.0 for p in pref)
 
-            # experiment 0123: the on-policy preference check. A second base
+            # experiment 0123: the own-answers check. A second base
             # answer per prompt (another seed), the judge picks between the two
             # base answers, and the check asks whether training moved towards
             # the judge's pick. Unlike dataset pairs these are answers the

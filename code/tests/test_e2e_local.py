@@ -71,7 +71,7 @@ def test_e2e_smoke(tmp_path):
         # the second-opinion judge is reported and kept per prompt
         assert "stub" in sanity["checks"]["other_judges"]
         assert all(0.0 <= r["p_stub"] <= 1.0 for r in samples)
-        # the preference check ran on the held-out labelled pairs (experiment 0123)
+        # the dataset check ran on the held-out labelled pairs (experiment 0123)
         pc = sanity["checks"]["preference_check"]
         assert pc["n_pairs"] == profile["sanity"]["pref_pairs"]
         assert 0.0 <= pc["accuracy_vs_dataset"] <= 1.0

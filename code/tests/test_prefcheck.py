@@ -1,4 +1,4 @@
-"""Preference check (experiment 0123): did training raise log p(chosen)
+"""Dataset check (experiment 0123): did training raise log p(chosen)
 relative to log p(rejected) on held-out labelled pairs?"""
 
 import math

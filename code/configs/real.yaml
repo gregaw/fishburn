@@ -4,7 +4,7 @@
 # engine and are judged by the same PairRM, so the training rule is the only
 # difference between them; DPO is the cheap check that the setup trains at all.
 # The pairs keep their dataset labels (no relabelling), and the sanity stage adds
-# the preference check on 1,000 held-out test-split pairs (pipeline/prefcheck.py).
+# the dataset check on 1,000 held-out test-split pairs (pipeline/prefcheck.py).
 profile: real
 
 model:
@@ -15,7 +15,7 @@ model:
 data_prep:
   source: ultrafeedback      # real preference data (pipeline/prefdata/loaders.py)
   n_pairs: 2048
-  n_test_pairs: 1000         # test-split pairs for the preference check, never trained on
+  n_test_pairs: 1000         # test-split pairs for the dataset check, never trained on
   n_eval_prompts: 256
   max_chars: 2000            # prompt + longer response; keeps sequences inside max_length
   seed: 7
@@ -72,8 +72,8 @@ train:
 sanity:
   backend: vllm              # vLLM sampling for both models (experiment 0122)
   gpu_memory_utilization: 0.4
-  pref_pairs: 1000           # the preference check (experiment 0123)
-  onpolicy_check: true       # the same on two base answers per prompt, judged by PairRM
+  pref_pairs: 1000           # the dataset check (experiment 0123)
+  onpolicy_check: true       # the own-answers check: the same on two base answers per prompt, judged by PairRM
   n_prompts: 256
   seed: 17
   n_bootstrap: 2000

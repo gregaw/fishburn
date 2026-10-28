@@ -1,4 +1,4 @@
-"""Preference check: did training move the model towards the labelled
+"""Dataset check: did training move the model towards the labelled
 preferences of held-out pairs? (experiment 0123).
 
 For each held-out pair (prompt, chosen, rejected), with the dataset's own
@@ -136,7 +136,7 @@ def summarize_onpolicy(
     n_boot: int,
     seed: int,
 ) -> dict:
-    """The on-policy check: `rows` are pairs of two base answers with the
+    """The own-answers check: `rows` are pairs of two base answers with the
     judge's P(first > second) in `p_judge`. Reports how often training moved
     towards the judge's pick, over the pairs the judge does not tie."""
     from pipeline.stages.sanity import bootstrap_ci
